@@ -1,45 +1,64 @@
 // Import modules
 
 import React, { useEffect, useState } from "react";
-import clear_icon from "../assets/clear.png";
-import clouds_icon from "../assets/clouds.png";
-import drizzle_icon from "../assets/drizzle.png";
-import humidity_icon from "../assets/humidity.png";
+import { Carousel } from "react-bootstrap";
 import mist_icon from "../assets/mist.png";
 import rain_icon from "../assets/rain.png";
-import search_icon from "../assets/search.png";
 import snow_icon from "../assets/snow.png";
 import wind_icon from "../assets/wind.png";
+import clear_icon from "../assets/clear.png";
+import clouds_icon from "../assets/clouds.png";
+import search_icon from "../assets/search.png";
+import drizzle_icon from "../assets/drizzle.png";
+import humidity_icon from "../assets/humidity.png";
+import SearchField from "../components/searchField";
 import { getWetherData } from "../services/wether.service";
 <meta name="viewport" content="width=device-width, initial-scale=1" />;
 // Weather Api fetching
 
 const Weather = () => {
-  const [weatherIcon, setWeatherIcon] = useState(clouds_icon);
+  const [index, setIndex] = useState(0);
   const [searchSring, setSearchString] = useState("");
-  const [previousSearch, SetPreviousSearch] = useState([]);
-  const [weatherData, setWeatherData] = useState({
+  const [weatherData, setWeatherData] = useState([
+    {
+      icon: "",
+      main: {},
+      name: "",
+      wind: { speed: 0, deg: 0 },
+    },
+  ]);
+  const [currentWeatherData, setCurrentWeatherData] = useState({
     icon: "",
     main: {},
     name: "",
     wind: { speed: 0, deg: 0 },
   });
 
+  const handleSelect = (selectedIndex) => {
+    console.log(
+      "🚀 ~ file: wether.jsx:33 ~ handleSelect ~ selectedIndex:",
+      selectedIndex
+    );
+    setIndex(selectedIndex);
+    setCurrentWeatherData(weatherData[selectedIndex]);
+  };
+
   //Handle get data
   const handleGetWeather = () => {
-    SetPreviousSearch([...previousSearch, searchSring]);
-    setSearchString("");
     if (searchSring) {
       getWetherData(searchSring).then(
         (res) => {
           const { main, weather, name, wind } = res.data;
-          setWeatherData({
+          setWeatherData([
             ...weatherData,
-            main: main,
-            icon: weather[0].icon,
-            name: name,
-            wind: wind,
-          });
+            {
+              main: main,
+              icon: weather[0].icon,
+              name: name,
+              wind: wind,
+            },
+          ]);
+          setSearchString("");
         },
         (error) => {
           setWeatherData({});
@@ -56,87 +75,90 @@ const Weather = () => {
     setSearchString(value);
   };
 
-  //Change Icons
-  useEffect(() => {
-    if (weatherData?.icon) {
-      if (weatherData.icon === "01d" || weatherData.icon === "01n") {
-        setWeatherIcon(clear_icon);
-      } else if (weatherData.icon === "02d" || weatherData.icon === "02n") {
-        setWeatherIcon(clouds_icon);
-      } else if (weatherData.icon === "03d" || weatherData.icon === "03n") {
-        setWeatherIcon(drizzle_icon);
-      } else if (weatherData.icon === "04d" || weatherData.icon === "04n") {
-        setWeatherIcon(drizzle_icon);
-      } else if (weatherData.icon === "09d" || weatherData.icon === "09n") {
-        setWeatherIcon(rain_icon);
-      } else if (weatherData.icon === "10d" || weatherData.icon === "10n") {
-        setWeatherIcon(rain_icon);
-      } else if (weatherData.icon === "13d" || weatherData.icon === "13n") {
-        setWeatherIcon(snow_icon);
-      } else if (weatherData.icon === "50d" || weatherData.icon === "50n") {
-        setWeatherIcon(mist_icon);
+  const renderWetherIcon = (obj) => {
+    if (obj?.icon) {
+      if (obj.icon === "01d" || obj.icon === "01n") {
+        return clear_icon;
+      } else if (obj.icon === "02d" || obj.icon === "02n") {
+        return clouds_icon;
+      } else if (obj.icon === "03d" || obj.icon === "03n") {
+        return drizzle_icon;
+      } else if (obj.icon === "04d" || obj.icon === "04n") {
+        return drizzle_icon;
+      } else if (obj.icon === "09d" || obj.icon === "09n") {
+        return rain_icon;
+      } else if (obj.icon === "10d" || obj.icon === "10n") {
+        return rain_icon;
+      } else if (obj.icon === "13d" || obj.icon === "13n") {
+        return snow_icon;
+      } else if (obj.icon === "50d" || obj.icon === "50n") {
+        return mist_icon;
       } else {
-        setWeatherIcon(clear_icon);
+        return clear_icon;
       }
     }
-  }, [weatherData]);
+  };
 
   return (
     <div className="container">
       <div className="top-bar d-flex">
-        <div>
-          <input
-            type="text"
-            value={searchSring}
-            className="cityInput px-2"
-            placeholder="Enter city name"
-            onChange={(e) => handleSearchValue(e.target.value)}
-          />
-          <div className="position">
-            {searchSring.length > 0 &&
-              previousSearch.map((val) => (
-                <p
-                  onClick={() => setSearchString(val)}
-                  className="text-start px-2"
-                >
-                  {val}
-                </p>
-              ))}
-          </div>
-        </div>
-        <div className="search-icon" onClick={() => handleGetWeather()}>
-          <img src={search_icon} alt="" />
+      <div>
+        <input
+          type="text"
+          value={searchSring}
+          className="cityInput px-2"
+          placeholder="Enter city name"
+          onChange={(e) => handleSearchValue(e.target.value)}
+        />
+        <div className="position">
+          {searchSring.length > 0 &&
+            weatherData.map((val) => (
+              <p
+                onClick={() => setSearchString(val.name)}
+                className="text-start px-2"
+              >
+                {val.name}
+              </p>
+            ))}
         </div>
       </div>
+      <div className="search-icon" onClick={() => handleGetWeather()}>
+        <img src={search_icon} alt="" />
+      </div>
+    </div>
 
-      <div className="weather-image">
-        <img src={weatherIcon} alt="" />
-      </div>
-      <div className="weather-temp">
-        {Math.round(weatherData.main?.temp) || 16}°C
-      </div>
-      <div className="weather-location">{weatherData.name}</div>
+      <Carousel activeIndex={index} onSelect={handleSelect}>
+        <Carousel.Item>
+          <div className="weather-image">
+            <img src={renderWetherIcon(currentWeatherData)} alt="" />
+          </div>
+          <div className="weather-temp">
+            {Math.round(currentWeatherData.main?.temp) || 16}°C
+          </div>
+          <div className="weather-location">{currentWeatherData.name}</div>
 
-      <div className="row">
-        <div className="col-6">
-          <img src={humidity_icon} alt="" className="icon" />
-          <div className="data">
-            <div className="humidity-percentage">
-              {Math.round(weatherData.main?.humidity) || 82}%
+          <div className="row">
+            <div className="col-6">
+              <img src={humidity_icon} alt="" className="icon" />
+              <div className="data">
+                <div className="humidity-percentage">
+                  {Math.round(currentWeatherData.main?.humidity) || 82}%
+                </div>
+                <div className="text">Humidity</div>
+              </div>
             </div>
-            <div className="text">Humidity</div>
-          </div>
-        </div>
-        <div className="col-6">
-          <img src={wind_icon} alt="" className="icon" />
-          <div className="data">
-            <div className="wind-rate">
-              {Math.round(weatherData.wind?.speed) || 0} km/h
+            <div className="col-6">
+              <img src={wind_icon} alt="" className="icon" />
+              <div className="data">
+                <div className="wind-rate">
+                  {Math.round(currentWeatherData.wind?.speed) || 0} km/h
+                </div>
+                <div className="text">wind speed</div>
+              </div>
             </div>
-            <div className="text">wind speed</div>
           </div>
-        </div>
-      </div>
+        </Carousel.Item>
+      </Carousel>
     </div>
   );
 };
